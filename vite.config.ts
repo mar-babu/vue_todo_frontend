@@ -1,4 +1,4 @@
-import path from 'node:path'
+import * as path from 'path'
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig, loadEnv } from 'vite'
@@ -11,6 +11,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
+        '@/components': path.resolve(__dirname, './src/components'),
+        '@/lib': path.resolve(__dirname, './src/lib')
       },
     },
     define: {

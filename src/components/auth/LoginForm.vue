@@ -1,17 +1,12 @@
 <script setup lang="ts">
-import type { HTMLAttributes } from "vue";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-
+import Button from '@/components/ui/button/Button.vue'
+import Card from '@/components/ui/card/Card.vue'
+import CardContent from '@/components/ui/card/CardContent.vue'
+import CardDescription from '@/components/ui/card/CardDescription.vue'
+import CardHeader from '@/components/ui/card/CardHeader.vue'
+import CardTitle from '@/components/ui/card/CardTitle.vue'
+import Input from "@/components/ui/input/Input.vue";
+import Label from "@/components/ui/label/Label.vue";
 import { ref } from "vue";
 import axios from "axios";
 import { useRouter } from "vue-router";
@@ -61,7 +56,7 @@ async function handleLogin() {
 </script>
 
 <template>
-  <Card class="mx-auto max-w-sm">
+  <Card class="max-w-sm mx-auto">
     <CardHeader>
       <CardTitle>Login to your account</CardTitle>
       <CardDescription>
@@ -90,7 +85,7 @@ async function handleLogin() {
               <Label for="password">Password</Label>
               <a
                 href="#"
-                class="ml-auto inline-block text-sm underline-offset-4 hover:underline"
+                class="inline-block ml-auto text-sm underline-offset-4 hover:underline"
               >
                 Forgot your password?
               </a>
@@ -109,7 +104,7 @@ async function handleLogin() {
           <Button type="submit" class="w-full" :disabled="isLoading">
             <template v-if="isLoading">
               <svg
-                class="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                class="w-4 h-4 mr-3 -ml-1 text-white animate-spin"
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
@@ -134,7 +129,7 @@ async function handleLogin() {
           </Button>
           <Button variant="outline" class="w-full"> Login with Google </Button>
         </div>
-        <div class="mt-4 text-center text-sm">
+        <div class="mt-4 text-sm text-center">
           Don't have an account?
           <RouterLink to="/signup" class="underline"> Sign up </RouterLink>
         </div>

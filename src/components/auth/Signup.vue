@@ -1,14 +1,12 @@
 <script setup lang="ts">
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import Button from '@/components/ui/button/Button.vue'
+import Card from '@/components/ui/card/Card.vue'
+import CardContent from '@/components/ui/card/CardContent.vue'
+import CardDescription from '@/components/ui/card/CardDescription.vue'
+import CardHeader from '@/components/ui/card/CardHeader.vue'
+import CardTitle from '@/components/ui/card/CardTitle.vue'
+import Input from "@/components/ui/input/Input.vue";
+import Label from "@/components/ui/label/Label.vue";
 import { ref } from "vue";
 import axios, { type AxiosError } from "axios";
 import { EyeIcon, EyeOffIcon } from "lucide-vue-next";
@@ -92,7 +90,7 @@ async function handleSubmit() {
 
 <template>
   <div class="items-center justify-center py-[8%]">
-    <Card class="mx-auto max-w-sm">
+    <Card class="max-w-sm mx-auto">
       <CardHeader>
         <CardTitle class="text-2xl"> Create an account </CardTitle>
         <CardDescription>
@@ -149,11 +147,11 @@ async function handleSubmit() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  class="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                   @click="showPassword = !showPassword"
                 >
-                  <EyeIcon v-if="showPassword" class="h-4 w-4" />
-                  <EyeOffIcon v-if="!showPassword" class="h-4 w-4" />
+                  <EyeIcon v-if="showPassword" class="w-4 h-4" />
+                  <EyeOffIcon v-if="!showPassword" class="w-4 h-4" />
                   <span class="sr-only">Toggle password visibility</span>
                 </Button>
               </div>
@@ -177,11 +175,11 @@ async function handleSubmit() {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  class="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                  class="absolute top-0 right-0 h-full px-3 py-2 hover:bg-transparent"
                   @click="showConfirmPassword = !showConfirmPassword"
                 >
-                  <EyeIcon v-if="showConfirmPassword" class="h-4 w-4" />
-                  <EyeOffIcon v-else class="h-4 w-4" />
+                  <EyeIcon v-if="showConfirmPassword" class="w-4 h-4" />
+                  <EyeOffIcon v-else class="w-4 h-4" />
                   <span class="sr-only">Toggle password visibility</span>
                 </Button>
               </div>
@@ -191,7 +189,7 @@ async function handleSubmit() {
             <Button type="submit" class="w-full" :disabled="isLoading">
               <template v-if="isLoading">
                 <svg
-                  class="animate-spin -ml-1 mr-3 h-4 w-4 text-white"
+                  class="w-4 h-4 mr-3 -ml-1 text-white animate-spin"
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
@@ -217,7 +215,7 @@ async function handleSubmit() {
           </div>
         </form>
 
-        <div class="mt-4 text-center text-sm">
+        <div class="mt-4 text-sm text-center">
           Already have an account?
           <RouterLink to="/login" class="underline"> Sign in </RouterLink>
         </div>
