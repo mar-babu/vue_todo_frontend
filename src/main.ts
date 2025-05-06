@@ -3,9 +3,10 @@ import './index.css'
 import App from './App.vue'
 import Vue3Toastify, { type ToastContainerOptions } from 'vue3-toastify'
 import 'vue3-toastify/dist/index.css'
-import { useRouter } from 'vue-router'
+import router from './router'
 
 const app = createApp(App)
+app.use(router)
 
 app.use(Vue3Toastify, {
   autoClose: 3000,
@@ -15,5 +16,4 @@ app.use(Vue3Toastify, {
   closeButton: false,
 } as ToastContainerOptions)
 
-app.use(useRouter)
 app.mount('#app')

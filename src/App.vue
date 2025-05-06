@@ -1,12 +1,11 @@
 <script setup lang="ts">
-  import { Button } from '@/components/ui/button'
-  import { Signup } from '@/components/auth'
+  import { RouterView } from 'vue-router'
 
 </script>
 
 <template>
-  <div class="py-8">
-    <Signup />
+  <div class="min-h-screen bg-background">
+      <RouterView />
   </div>
 </template>
 

@@ -8,10 +8,12 @@
     "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "jsx": "preserve",
     "types": [
       "vite/client",
+      "vue",
       "vue3-toastify/global"
     ],
     "baseUrl": ".",
