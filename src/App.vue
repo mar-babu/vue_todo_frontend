@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import { Button } from '@/components/ui/button'
+  import { RouterView } from 'vue-router'
 
 </script>
 
 <template>
-  <div class="container py-8 px-280">
-    <Button>Click Me</Button>
+  <div class="min-h-screen bg-background">
+      <RouterView />
   </div>
 </template>
 
