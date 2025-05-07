@@ -11,7 +11,8 @@ import { TaskStatus } from "@/services/taskService"
 import type { Task } from "@/services/taskService"
 
 type Filter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Cancelled'
-const filters: Filter[] = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled']
+// const filters: Filter[] = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled']
+const filters: Filter[] = ['All', 'Pending', 'Completed']
 const activeFilter = ref<Filter>('All')
 
 const apiFilterMap: Record<Filter, TaskStatus | 'all'> = {
