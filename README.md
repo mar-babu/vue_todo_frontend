@@ -25,8 +25,7 @@ This Todo App is built with **Vue 3**, powered by **Vite**, and designed to keep
 
 ## 📸 Dashboard Preview
 
-![Dashboard Screenshot](![ar-techpro-dotcom-todo](https://github.com/user-attachments/assets/2727f719-4a06-42c4-b52d-922f3a1a972d)
-)
+![Dashboard Screenshot](https://github.com/user-attachments/assets/2727f719-4a06-42c4-b52d-922f3a1a972d)
 
 ---
 
