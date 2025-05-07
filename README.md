@@ -25,7 +25,8 @@ This Todo App is built with **Vue 3**, powered by **Vite**, and designed to keep
 
 ## 📸 Dashboard Preview
 
-![Dashboard Screenshot]()
+![Dashboard Screenshot](![ar-techpro-dotcom-todo](https://github.com/user-attachments/assets/2727f719-4a06-42c4-b52d-922f3a1a972d)
+)
 
 ---
 
@@ -37,7 +38,7 @@ Follow these steps to install and run the project locally:
 
 ```bash
 git clone https://https://github.com/mar-babu/vue_todo_frontend.git
-cd vue-vite-todo-app
+cd vue_todo_frontend
 npm install
 npm run dev
 ```
