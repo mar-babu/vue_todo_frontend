@@ -8,6 +8,7 @@ import CardTitle from '@/components/ui/card/CardTitle.vue'
 import { useRouter } from 'vue-router'
 import { toast } from 'vue3-toastify'
 import axios from 'axios';
+import TaskView from './task/TaskView.vue'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const router = useRouter()
@@ -56,14 +57,17 @@ async function handleLogout() {
               >
                 Logout
               </Button>
-          </div>
-            
+            </div>
+
           </div>
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div>
           <p>You're successfully logged in!</p>
+        </div>
+        <div>
+          <TaskView />
         </div>
       </CardContent>
     </Card>
