@@ -29,6 +29,10 @@ This Todo App is built with **Vue 3**, powered by **Vite**, and designed to keep
 
 ---
 
+### Prerequisites
+- Node.js
+- npm
+
 ## 🛠️ Getting Started (Local Setup)
 
 Follow these steps to install and run the project locally:
