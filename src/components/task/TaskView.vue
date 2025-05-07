@@ -109,12 +109,13 @@ const handleTaskUpdated = (updatedTask: Task) => {
       <TaskAddForm @task-created="handleTaskCreated" />
     </div>
 
-    <div class="flex gap-2 mb-6">
+    <div class="grid grid-cols-3 gap-2 mb-6 sm:flex sm:flex-row">
       <Button
         v-for="filter in filters"
         :key="filter"
         :variant="activeFilter === filter ? 'default' : 'outline'"
         @click="activeFilter = filter"
+        class="text-xs cursor-pointer sm:text-sm whitespace-nowrap"
       >
         {{ filter }}
       </Button>

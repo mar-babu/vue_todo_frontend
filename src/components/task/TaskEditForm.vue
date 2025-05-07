@@ -5,13 +5,12 @@ import DialogContent from '@/components/ui/dialog/DialogContent.vue'
 import DialogFooter from '@/components/ui/dialog/DialogFooter.vue'
 import DialogHeader from '@/components/ui/dialog/DialogHeader.vue'
 import DialogTitle from '@/components/ui/dialog/DialogTitle.vue'
-import DialogTrigger from '@/components/ui/dialog/DialogTrigger.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Label from '@/components/ui/label/Label.vue'
 import Spinner from '@/components/ui/spinner/Spinner.vue'
 import DescriptionEditor from '@/components/task/DescriptionEditor.vue'
-import { onMounted, ref, watch } from 'vue'
-import { Task } from '@/services/taskService'
+import { ref, watch } from 'vue'
+import type { Task } from '@/services/taskService'
 import { TaskService } from '@/services/taskService'
 
 interface Props {
@@ -28,13 +27,13 @@ const emit = defineEmits<{
 
 const isDialogOpen = ref(props.open)
 const task = ref<Task | null>(null)
-const name = ref(props?.task?.name)
-const description = ref(props?.task?.description)
+const name = ref('')
+const description = ref('')
 const isSubmitting = ref(false)
 const isLoading = ref(false)
 const errors = ref<Record<string, string>>({})
 
-watch(() => props.open, async (val) => {
+watch(() => props.open, async (val: any) => {
   isDialogOpen.value = val
   if (val) {
     await fetchTask()
@@ -43,7 +42,7 @@ watch(() => props.open, async (val) => {
   }
 })
 
-watch(isDialogOpen, (val) => {
+watch(isDialogOpen, (val: any) => {
   if (!val) {
     closeDialog()
   }
@@ -79,15 +78,10 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   errors.value = {}
-  
-  if (!name.value.trim()) {
-    errors.value.name = 'Task name is required'
-    return
-  }
 
   try {
     isSubmitting.value = true
-    const response = await TaskService.update(task.value.id, {
+    const response = await TaskService.update(props.taskId, {
       name: name.value,
       description: description.value
     })
@@ -113,7 +107,6 @@ const handleSubmit = async () => {
     <DialogContent class="sm:max-w-[600px]">
       <DialogHeader>
         <DialogTitle>Edit Task</DialogTitle>
-        <DialogClose @click="closeDialog" class="absolute right-4 top-4" />
       </DialogHeader>
       
       <div v-if="isLoading" class="py-8 text-center">
@@ -130,7 +123,7 @@ const handleSubmit = async () => {
               :class="{ 'border-destructive': errors.name }"
             />
             <p v-if="errors.name" class="text-sm text-destructive">
-              {{ errors.name }}
+              {{ errors.name[0] }}
             </p>
           </div>
         
@@ -138,7 +131,7 @@ const handleSubmit = async () => {
             <Label>Description</Label>
             <DescriptionEditor v-model="description" />
             <p v-if="errors.description" class="text-sm text-destructive">
-              {{ errors.description }}
+              {{ errors.description[0] }}
             </p>
           </div>
         </div>
@@ -149,10 +142,10 @@ const handleSubmit = async () => {
       </div>
 
       <DialogFooter class="gap-2">
-        <Button variant="outline" @click="closeDialog()">
+        <Button variant="outline" @click="closeDialog()" class="cursor-pointer">
           Cancel
         </Button>
-        <Button :disabled="isSubmitting" @click="handleSubmit">
+        <Button :disabled="isSubmitting" @click="handleSubmit" class="cursor-pointer">
           <Spinner v-if="isSubmitting" class="w-4 h-4 mr-2" />
           {{ isSubmitting ? 'Saving...' : 'Save Changes' }}
         </Button>

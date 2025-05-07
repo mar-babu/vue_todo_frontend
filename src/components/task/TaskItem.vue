@@ -42,46 +42,53 @@ const handleDelete = () => {
 			:id="`task-${task.id}`"
 			:model-value="task.status === TaskStatus.COMPLETED"
 			@update:modelValue="handleToggle"
-			class="mt-1"
+			class="mt-1 cursor-pointer shrink-0"
 		/>
-		
-		<div class="flex-1">
-			<div class="flex items-center justify-between gap-2">
-				<span class="font-medium"
+	
+		<div class="flex-1 min-w-0 overflow-hidden">
+			<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+				<span 
+					class="font-medium line-clamp-2 min-h-[40px] w-full max-w-full truncate text-ellipsis
+						xs:max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[500px]"
 					:class="{
-							'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED
+					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED
 					}"
 				>
 					{{ task.name }}
 				</span>
-				<span class="text-sm text-muted-foreground">
-					{{ getStatusLabel(task.status) }}
-				</span>
 				
-				<div class="flex items-center gap-2">
-					<Button
-						variant="ghost"
-						size="sm"
-						class="transition-opacity opacity-0 group-hover:opacity-100"
-						@click="emit('edit', task)"
-					>
-						<PencilIcon class="w-4 h-4" />
-					</Button>
-					<Button
-						variant="ghost"
-						size="sm"
-						class="transition-opacity opacity-0 group-hover:opacity-100"
-						@click="handleDelete"
-					>
-						<TrashIcon class="w-4 h-4 text-destructive" />
-					</Button>
+				<div class="flex items-center gap-2 ml-auto">
+					<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full whitespace-nowrap">
+					{{ getStatusLabel(task.status) }}
+					</span>
+					
+					<div class="flex items-center gap-1">
+						<Button
+							variant="ghost"
+							size="sm"
+							class="transition-opacity opacity-0 cursor-pointer group-hover:opacity-100"
+							@click="emit('edit', task)"
+						>
+							<PencilIcon class="w-4 h-4" />
+						</Button>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="transition-opacity opacity-0 cursor-pointer group-hover:opacity-100"
+							@click="handleDelete"
+						>
+							<TrashIcon class="w-4 h-4 text-destructive" />
+						</Button>
+					</div>
 				</div>
-
 			</div>
 		
 			<div
 				v-if="task.description"
 				class="mt-2 prose-sm prose text-muted-foreground"
+				:class="{
+					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED
+				}"
 				v-html="task.description"
 			>
 			</div>

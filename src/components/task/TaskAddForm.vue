@@ -12,7 +12,7 @@ import Spinner from '@/components/ui/spinner/Spinner.vue'
 import DescriptionEditor from '@/components/task/DescriptionEditor.vue'
 import { ref } from "vue";
 import { PlusIcon } from 'lucide-vue-next'
-import { Task } from '@/services/taskService'
+import type { Task } from '@/services/taskService'
 import { TaskService } from '@/services/taskService'
 
 const emit = defineEmits<{
@@ -25,6 +25,11 @@ const description = ref('')
 const isSubmitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
+const closeDialog = () => {
+  isDialogOpen.value = false
+  resetForm()
+}
+
 const resetForm = () => {
   name.value = ''
   description.value = ''
@@ -33,17 +38,12 @@ const resetForm = () => {
 
 const handleSubmit = async () => {
   errors.value = {}
-  
-  if (!name.value.trim()) {
-    errors.value.name = 'Task name is required'
-    return
-  }
 
   try {
     isSubmitting.value = true
     const newTask = await TaskService.create({
       name: name.value,
-      description: description.value || '<p></p>'
+      description: description.value
     })
     emit('task-created', newTask)
     isDialogOpen.value = false
@@ -63,7 +63,7 @@ const handleSubmit = async () => {
 <template>
 	<Dialog v-model:open="isDialogOpen">
 		<DialogTrigger as-child>
-			<Button variant="outline" class="gap-2">
+			<Button variant="outline" class="gap-2 cursor-pointer">
 				<PlusIcon class="w-4 h-4" />
 				Add Task
 			</Button>
@@ -85,7 +85,7 @@ const handleSubmit = async () => {
             @keyup.enter="handleSubmit"
           />
           <p v-if="errors.name" class="text-sm text-destructive">
-            {{ errors.name }}
+            {{ errors.name[0] }}
           </p>
 				</div>
 				
@@ -93,13 +93,16 @@ const handleSubmit = async () => {
 					<Label>Description</Label>
 					<DescriptionEditor v-model="description" />
 					<p v-if="errors.description" class="text-sm text-destructive">
-            {{ errors.description }}
+            {{ errors.description[0] }}
           </p>
 				</div>
 			</div>
 			
 			<DialogFooter>
-				<Button :disabled="isSubmitting" @click="handleSubmit">
+        <Button variant="outline" @click="closeDialog()" class="cursor-pointer">
+          Cancel
+        </Button>
+				<Button :disabled="isSubmitting" @click="handleSubmit" class="cursor-pointer">
 					<Spinner v-if="isSubmitting" class="w-4 h-4 mr-2" />
 					{{ isSubmitting ? 'Processing...' : 'Submit' }}
 				</Button>
