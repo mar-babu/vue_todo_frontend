@@ -7,11 +7,19 @@ export enum TaskStatus {
   CANCELLED = 3
 }
 
+export enum TaskPriority {
+  LOW = 0,
+  MEDIUM = 1,
+  HIGH = 2
+}
+
 export interface Task {
   id: string
   name: string
   description: string
   status: TaskStatus
+  priority: TaskPriority
+  priority_name: string
   created_at: string
   updated_at: string
 }
@@ -58,7 +66,7 @@ export const TaskService = {
     return data
   },
 
-  async create(task: { name: string; description: string }): Promise<Task> {
+  async create(task: { name: string; description: string; priority?: TaskPriority }): Promise<Task> {
     const { data } = await apiClient.post('/tasks', task)
     return data
   },
@@ -80,6 +88,13 @@ export const TaskService = {
   async updateStatus(id: string, newStatus: TaskStatus): Promise<Task> {
     const { data } = await apiClient.put(`/tasks/${id}/status`, {
       status: newStatus
+    })
+    return data.data
+  },
+
+  async updatePriority(id: string, newPriority: TaskPriority): Promise<Task> {
+    const { data } = await apiClient.put(`/tasks/${id}/priority`, {
+      priority: newPriority
     })
     return data.data
   }

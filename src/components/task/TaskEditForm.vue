@@ -11,7 +11,7 @@ import Spinner from '@/components/ui/spinner/Spinner.vue'
 import DescriptionEditor from '@/components/task/DescriptionEditor.vue'
 import { ref, watch } from 'vue'
 import type { Task } from '@/services/taskService'
-import { TaskService } from '@/services/taskService'
+import { TaskService, TaskPriority } from '@/services/taskService'
 
 interface Props {
   taskId: string
@@ -29,6 +29,7 @@ const isDialogOpen = ref(props.open)
 const task = ref<Task | null>(null)
 const name = ref('')
 const description = ref('')
+const priority = ref<TaskPriority>(TaskPriority.LOW)
 const isSubmitting = ref(false)
 const isLoading = ref(false)
 const errors = ref<Record<string, string>>({})
@@ -55,6 +56,7 @@ const fetchTask = async () => {
     task.value = data
     name.value = data.name
     description.value = data.description
+    priority.value = data.priority
     errors.value = {}
   } catch (error) {
     errors.value.general = 'Failed to load task'
@@ -73,6 +75,7 @@ const closeDialog = () => {
 const resetForm = () => {
   name.value = ''
   description.value = ''
+  priority.value = TaskPriority.LOW
   errors.value = {}
 }
 
@@ -83,7 +86,8 @@ const handleSubmit = async () => {
     isSubmitting.value = true
     const response = await TaskService.update(props.taskId, {
       name: name.value,
-      description: description.value
+      description: description.value,
+      priority: Number(priority.value)
     })
     
     if (response.success) {
@@ -132,6 +136,22 @@ const handleSubmit = async () => {
             <DescriptionEditor v-model="description" />
             <p v-if="errors.description" class="text-sm text-destructive">
               {{ errors.description[0] }}
+            </p>
+          </div>
+
+          <div class="grid gap-2">
+            <Label for="edit-priority">Priority</Label>
+            <select 
+              id="edit-priority" 
+              v-model="priority"
+              class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <option :value="TaskPriority.LOW">Low</option>
+              <option :value="TaskPriority.MEDIUM">Medium</option>
+              <option :value="TaskPriority.HIGH">High</option>
+            </select>
+            <p v-if="errors.priority" class="text-sm text-destructive">
+              {{ errors.priority[0] }}
             </p>
           </div>
         </div>

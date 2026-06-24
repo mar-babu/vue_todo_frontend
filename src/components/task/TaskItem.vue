@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { PencilIcon, TrashIcon } from 'lucide-vue-next'
 import type { Task } from '@/services/taskService'
-import { TaskStatus } from "@/services/taskService"
-import { getStatusLabel } from '@/lib/utils';
+import { TaskStatus, TaskPriority } from "@/services/taskService"
 import Button from '@/components/ui/button/Button.vue'
+import TaskBadgeSelect from '@/components/task/TaskBadgeSelect.vue'
 
 const props = defineProps<{
 	task: Task
@@ -11,30 +11,30 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'toggle', taskId: string, newStatus: TaskStatus): void
+  (e: 'updatePriority', taskId: string, newPriority: TaskPriority): void
 	(e: 'delete', taskId: string): void
 	(e: 'edit', task: Task): void
 }>()
 
+const statusOptions = [
+  { value: TaskStatus.PENDING, label: 'Pending', colorClass: 'bg-amber-100 text-amber-800' },
+  { value: TaskStatus.IN_PROGRESS, label: 'In Progress', colorClass: 'bg-blue-100 text-blue-800' },
+  { value: TaskStatus.COMPLETED, label: 'Completed', colorClass: 'bg-green-100 text-green-800' },
+  { value: TaskStatus.CANCELLED, label: 'Cancelled', colorClass: 'bg-gray-100 text-gray-800' }
+]
 
-function handleStatusChange(event: Event) {
-  const target = event.target as HTMLSelectElement
-  const newStatus = Number(target.value) as TaskStatus
-  emit('toggle', props.task.id, newStatus)
+const priorityOptions = [
+  { value: TaskPriority.LOW, label: 'Low', colorClass: 'bg-slate-100 text-slate-800 border border-slate-200' },
+  { value: TaskPriority.MEDIUM, label: 'Medium', colorClass: 'bg-amber-100 text-amber-800 border border-amber-200' },
+  { value: TaskPriority.HIGH, label: 'High', colorClass: 'bg-red-100 text-red-800 border border-red-200' }
+]
+
+function handleStatusChangeValue(newStatus: number) {
+  emit('toggle', props.task.id, newStatus as TaskStatus)
 }
 
-function getStatusColorClass(status: TaskStatus) {
-  switch (status) {
-    case TaskStatus.PENDING:
-      return 'bg-amber-100 text-amber-800'
-    case TaskStatus.IN_PROGRESS:
-      return 'bg-blue-100 text-blue-800'
-    case TaskStatus.COMPLETED:
-      return 'bg-green-100 text-green-800'
-    case TaskStatus.CANCELLED:
-      return 'bg-gray-100 text-gray-800'
-    default:
-      return 'bg-gray-100 text-gray-700'
-  }
+function handlePriorityChangeValue(newPriority: number) {
+  emit('updatePriority', props.task.id, newPriority as TaskPriority)
 }
 
 const handleDelete = () => {
@@ -59,17 +59,17 @@ const handleDelete = () => {
 				</span>
 				
 				<div class="flex flex-wrap items-center gap-2 ml-auto shrink-0">
-					<select 
-						class="text-xs font-medium px-2 py-1 rounded-full cursor-pointer outline-none focus:ring-2 border-none"
-						:class="getStatusColorClass(task.status)"
-						:value="task.status"
-						@change="handleStatusChange($event)"
-					>
-						<option :value="TaskStatus.PENDING" class="bg-amber-100 text-amber-800">Pending</option>
-						<option :value="TaskStatus.IN_PROGRESS" class="bg-blue-100 text-blue-800">In Progress</option>
-						<option :value="TaskStatus.COMPLETED" class="bg-green-100 text-green-800">Completed</option>
-						<option :value="TaskStatus.CANCELLED" class="bg-gray-100 text-gray-800">Cancelled</option>
-					</select>
+					<TaskBadgeSelect
+						:model-value="task.priority ?? TaskPriority.LOW"
+						:options="priorityOptions"
+						@update:model-value="handlePriorityChangeValue"
+					/>
+					
+					<TaskBadgeSelect
+						:model-value="task.status"
+						:options="statusOptions"
+						@update:model-value="handleStatusChangeValue"
+					/>
 					
 					<div class="flex items-center gap-1">
 						<Button

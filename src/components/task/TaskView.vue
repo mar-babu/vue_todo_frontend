@@ -7,7 +7,7 @@ import TaskAddForm from "@/components/task/TaskAddForm.vue"
 import TaskItem from "@/components/task/TaskItem.vue"
 import TaskEditForm from "@/components/task/TaskEditForm.vue"
 import { TaskService } from "@/services/taskService"
-import { TaskStatus } from "@/services/taskService"
+import { TaskStatus, TaskPriority } from "@/services/taskService"
 import type { Task } from "@/services/taskService"
 
 type Filter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Cancelled'
@@ -81,6 +81,15 @@ const handleToggleTask = async (taskId: string, newStatus: TaskStatus) => {
   }
 }
 
+const handleUpdatePriority = async (taskId: string, newPriority: TaskPriority) => {
+  try {
+    await TaskService.updatePriority(taskId, newPriority)
+    await fetchTasks()
+  } catch (err) {
+    error.value = 'Failed to update task priority'
+  }
+}
+
 const handleDeleteTask = async (taskId: string) => {
   try {
     await TaskService.delete(taskId)
@@ -147,6 +156,7 @@ const handleTaskUpdated = (updatedTask: Task) => {
             :key="task.id"
             :task="task"
             @toggle="handleToggleTask"
+            @updatePriority="handleUpdatePriority"
             @delete="handleDeleteTask"
             @edit="handleEditTask"
           />
