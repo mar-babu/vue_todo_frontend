@@ -97,5 +97,9 @@ export const TaskService = {
       priority: newPriority
     })
     return data.data
+  },
+
+  async reorderTasks(tasks: { id: string; position: number }[]): Promise<void> {
+    await apiClient.put('/tasks/reorder', { tasks })
   }
 }
