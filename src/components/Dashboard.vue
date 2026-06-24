@@ -41,7 +41,7 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="p-8">
+  <div class="p-4 md:p-8">
     <Card>
       <CardHeader>
         <CardTitle>Dashboard</CardTitle>

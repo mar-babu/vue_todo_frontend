@@ -3,7 +3,7 @@ import { PencilIcon, TrashIcon } from 'lucide-vue-next'
 import type { Task } from '@/services/taskService'
 import { TaskStatus } from "@/services/taskService"
 import { getStatusLabel } from '@/lib/utils';
-import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
+import Button from '@/components/ui/button/Button.vue'
 
 const props = defineProps<{
 	task: Task
@@ -16,19 +16,26 @@ const emit = defineEmits<{
 }>()
 
 
-function handleToggle(value: any) {
-  // multi-select checkbox with boolean value
-  if (Array.isArray(value)) {
-    const isChecked = value.includes(props.task.id)
-    const newStatus = isChecked ? TaskStatus.COMPLETED : TaskStatus.PENDING
-    emit('toggle', props.task.id, newStatus)
-  } else {
-    // single checkbox with boolean value
-    const newStatus = value ? TaskStatus.COMPLETED : TaskStatus.PENDING
-    emit('toggle', props.task.id, newStatus)
-  }
+function handleStatusChange(event: Event) {
+  const target = event.target as HTMLSelectElement
+  const newStatus = Number(target.value) as TaskStatus
+  emit('toggle', props.task.id, newStatus)
 }
 
+function getStatusColorClass(status: TaskStatus) {
+  switch (status) {
+    case TaskStatus.PENDING:
+      return 'bg-amber-100 text-amber-800'
+    case TaskStatus.IN_PROGRESS:
+      return 'bg-blue-100 text-blue-800'
+    case TaskStatus.COMPLETED:
+      return 'bg-green-100 text-green-800'
+    case TaskStatus.CANCELLED:
+      return 'bg-gray-100 text-gray-800'
+    default:
+      return 'bg-gray-100 text-gray-700'
+  }
+}
 
 const handleDelete = () => {
 	emit('delete', props.task.id)
@@ -38,35 +45,37 @@ const handleDelete = () => {
 
 <template>
 	<div class="flex items-start gap-4 p-4 transition-colors border rounded-lg group hover:bg-accent/50">
-		<Checkbox
-			:id="`task-${task.id}`"
-			:model-value="task.status === TaskStatus.COMPLETED"
-			@update:modelValue="handleToggle"
-			class="mt-1 cursor-pointer shrink-0"
-		/>
-	
 		<div class="flex-1 min-w-0 overflow-hidden">
 			<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
 				<span 
+					:title="task.name"
 					class="font-medium line-clamp-2 min-h-[40px] w-full max-w-full truncate text-ellipsis
 						xs:max-w-[200px] sm:max-w-[300px] md:max-w-[400px] lg:max-w-[500px]"
 					:class="{
-					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED
+					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CANCELLED
 					}"
 				>
 					{{ task.name }}
 				</span>
 				
-				<div class="flex items-center gap-2 ml-auto">
-					<span class="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-full whitespace-nowrap">
-					{{ getStatusLabel(task.status) }}
-					</span>
+				<div class="flex flex-wrap items-center gap-2 ml-auto shrink-0">
+					<select 
+						class="text-xs font-medium px-2 py-1 rounded-full cursor-pointer outline-none focus:ring-2 border-none"
+						:class="getStatusColorClass(task.status)"
+						:value="task.status"
+						@change="handleStatusChange($event)"
+					>
+						<option :value="TaskStatus.PENDING" class="bg-amber-100 text-amber-800">Pending</option>
+						<option :value="TaskStatus.IN_PROGRESS" class="bg-blue-100 text-blue-800">In Progress</option>
+						<option :value="TaskStatus.COMPLETED" class="bg-green-100 text-green-800">Completed</option>
+						<option :value="TaskStatus.CANCELLED" class="bg-gray-100 text-gray-800">Cancelled</option>
+					</select>
 					
 					<div class="flex items-center gap-1">
 						<Button
 							variant="ghost"
 							size="sm"
-							class="transition-opacity opacity-0 cursor-pointer group-hover:opacity-100"
+							class="transition-opacity opacity-100 md:opacity-0 cursor-pointer md:group-hover:opacity-100"
 							@click="emit('edit', task)"
 						>
 							<PencilIcon class="w-4 h-4" />
@@ -74,7 +83,7 @@ const handleDelete = () => {
 						<Button
 							variant="ghost"
 							size="sm"
-							class="transition-opacity opacity-0 cursor-pointer group-hover:opacity-100"
+							class="transition-opacity opacity-100 md:opacity-0 cursor-pointer md:group-hover:opacity-100"
 							@click="handleDelete"
 						>
 							<TrashIcon class="w-4 h-4 text-destructive" />
@@ -87,7 +96,7 @@ const handleDelete = () => {
 				v-if="task.description"
 				class="mt-2 prose-sm prose text-muted-foreground"
 				:class="{
-					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED
+					'line-through text-muted-foreground': task.status === TaskStatus.COMPLETED || task.status === TaskStatus.CANCELLED
 				}"
 				v-html="task.description"
 			>
