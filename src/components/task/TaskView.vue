@@ -7,12 +7,11 @@ import TaskAddForm from "@/components/task/TaskAddForm.vue"
 import TaskItem from "@/components/task/TaskItem.vue"
 import TaskEditForm from "@/components/task/TaskEditForm.vue"
 import { TaskService } from "@/services/taskService"
-import { TaskStatus } from "@/services/taskService"
+import { TaskStatus, TaskPriority } from "@/services/taskService"
 import type { Task } from "@/services/taskService"
 
 type Filter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Cancelled'
-// const filters: Filter[] = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled']
-const filters: Filter[] = ['All', 'Pending', 'Completed']
+const filters: Filter[] = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled']
 const activeFilter = ref<Filter>('All')
 
 const apiFilterMap: Record<Filter, TaskStatus | 'all'> = {
@@ -23,7 +22,23 @@ const apiFilterMap: Record<Filter, TaskStatus | 'all'> = {
   'Cancelled': TaskStatus.CANCELLED
 }
 
-const tasks = ref<Task[]>([]);
+const allTasks = ref<Task[]>([]);
+
+const tasks = computed(() => {
+  if (activeFilter.value === 'All') return allTasks.value;
+  return allTasks.value.filter(t => t.status === apiFilterMap[activeFilter.value]);
+});
+
+const filterCounts = computed(() => {
+  return {
+    'All': allTasks.value.length,
+    'Pending': allTasks.value.filter(t => t.status === TaskStatus.PENDING).length,
+    'In Progress': allTasks.value.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
+    'Completed': allTasks.value.filter(t => t.status === TaskStatus.COMPLETED).length,
+    'Cancelled': allTasks.value.filter(t => t.status === TaskStatus.CANCELLED).length
+  }
+});
+
 const loading = ref(true);
 const error = ref<string | null>(null);
 const selectedTaskId = ref<string>('')
@@ -32,28 +47,25 @@ const isEditDialogOpen = ref(false)
 const fetchTasks = async () => {
   try {
     loading.value = true
-    tasks.value = await TaskService.getAll(apiFilterMap[activeFilter.value])
+    allTasks.value = await TaskService.getAll('all')
     error.value = null
   } catch (err) {
     error.value = 'Failed to load tasks'
-    tasks.value = []
+    allTasks.value = []
   } finally {
     loading.value = false
   }
 }
 
-// watch filter changes
-watch(activeFilter, fetchTasks)
-
 // initial fetch
 onMounted(fetchTasks)
 
 const remainingTasks = computed(() => 
-  tasks.value.filter((t: any) => t.status !== TaskStatus.COMPLETED).length
+  allTasks.value.filter((t: any) => t.status !== TaskStatus.COMPLETED).length
 )
 
 const completedCount = computed(() =>
-  tasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED).length
+  allTasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED).length
 )
 
 const handleTaskCreated = async () => {
@@ -63,12 +75,18 @@ const handleTaskCreated = async () => {
 const handleToggleTask = async (taskId: string, newStatus: TaskStatus) => {
   try {
     await TaskService.updateStatus(taskId, newStatus)
-    tasks.value = tasks.value.map((task: Task) => 
-      task.id === taskId ? { ...task, status: newStatus } : task
-    )
     await fetchTasks()
   } catch (err) {
     error.value = 'Failed to update task status'
+  }
+}
+
+const handleUpdatePriority = async (taskId: string, newPriority: TaskPriority) => {
+  try {
+    await TaskService.updatePriority(taskId, newPriority)
+    await fetchTasks()
+  } catch (err) {
+    error.value = 'Failed to update task priority'
   }
 }
 
@@ -83,7 +101,7 @@ const handleDeleteTask = async (taskId: string) => {
 
 const clearCompleted = async () => {
   try {
-    const completedTasks = tasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED)
+    const completedTasks = allTasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED)
     await Promise.all(completedTasks.map((t: any) => TaskService.delete(t.id)))
     await fetchTasks()
   } catch (err) {
@@ -97,20 +115,20 @@ const handleEditTask = (task: Task) => {
 }
 
 const handleTaskUpdated = (updatedTask: Task) => {
-  tasks.value = tasks.value.map((t: any) => 
+  allTasks.value = allTasks.value.map((t: any) => 
     t.id === updatedTask.id ? updatedTask : t
   )
 }
 </script>
 
 <template>
-  <div class="max-w-3xl p-6 mx-auto">
+  <div class="max-w-3xl p-2 sm:p-6 mx-auto">
     <div class="flex items-center justify-between mb-8">
       <h1 class="text-3xl font-bold">Todo App</h1>
       <TaskAddForm @task-created="handleTaskCreated" />
     </div>
 
-    <div class="grid grid-cols-3 gap-2 mb-6 sm:flex sm:flex-row">
+    <div class="grid grid-cols-3 gap-2 mb-6 sm:flex sm:flex-row flex-wrap">
       <Button
         v-for="filter in filters"
         :key="filter"
@@ -118,7 +136,7 @@ const handleTaskUpdated = (updatedTask: Task) => {
         @click="activeFilter = filter"
         class="text-xs cursor-pointer sm:text-sm whitespace-nowrap"
       >
-        {{ filter }}
+        {{ filter }} ({{ filterCounts[filter] }})
       </Button>
     </div>
 
@@ -138,6 +156,7 @@ const handleTaskUpdated = (updatedTask: Task) => {
             :key="task.id"
             :task="task"
             @toggle="handleToggleTask"
+            @updatePriority="handleUpdatePriority"
             @delete="handleDeleteTask"
             @edit="handleEditTask"
           />

@@ -13,7 +13,7 @@ import DescriptionEditor from '@/components/task/DescriptionEditor.vue'
 import { ref } from "vue";
 import { PlusIcon } from 'lucide-vue-next'
 import type { Task } from '@/services/taskService'
-import { TaskService } from '@/services/taskService'
+import { TaskService, TaskPriority } from '@/services/taskService'
 
 const emit = defineEmits<{
 	(e: 'task-created', task: Task): void
@@ -22,6 +22,7 @@ const emit = defineEmits<{
 const isDialogOpen = ref(false)
 const name = ref('')
 const description = ref('')
+const priority = ref<TaskPriority>(TaskPriority.LOW)
 const isSubmitting = ref(false)
 const errors = ref<Record<string, string>>({})
 
@@ -33,6 +34,7 @@ const closeDialog = () => {
 const resetForm = () => {
   name.value = ''
   description.value = ''
+  priority.value = TaskPriority.LOW
   errors.value = {}
 }
 
@@ -43,7 +45,8 @@ const handleSubmit = async () => {
     isSubmitting.value = true
     const newTask = await TaskService.create({
       name: name.value,
-      description: description.value
+      description: description.value,
+      priority: Number(priority.value)
     })
     emit('task-created', newTask)
     isDialogOpen.value = false
@@ -94,6 +97,22 @@ const handleSubmit = async () => {
 					<DescriptionEditor v-model="description" />
 					<p v-if="errors.description" class="text-sm text-destructive">
             {{ errors.description[0] }}
+          </p>
+				</div>
+
+        <div class="grid gap-2">
+					<Label for="priority">Priority</Label>
+					<select 
+            id="priority" 
+            v-model="priority"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <option :value="TaskPriority.LOW">Low</option>
+            <option :value="TaskPriority.MEDIUM">Medium</option>
+            <option :value="TaskPriority.HIGH">High</option>
+          </select>
+          <p v-if="errors.priority" class="text-sm text-destructive">
+            {{ errors.priority[0] }}
           </p>
 				</div>
 			</div>

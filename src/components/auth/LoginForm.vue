@@ -33,7 +33,7 @@ async function handleLogin() {
 
     localStorage.setItem("auth_token", response.data.token);
 
-    toast.success(response.data.message);
+    toast.success(response.data.message, { autoClose: 2000 });
 
     router.push("/dashboard");
   } catch (error) {
