@@ -10,7 +10,9 @@ import TaskEditForm from "@/components/task/TaskEditForm.vue"
 import { TaskService } from "@/services/taskService"
 import { TaskStatus, TaskPriority } from "@/services/taskService"
 import type { Task, TaskCounts } from "@/services/taskService"
-import { GripVerticalIcon, ArrowUpDownIcon, CheckIcon } from 'lucide-vue-next'
+import { Input } from '@/components/ui/input'
+import { Sheet, SheetContent, SheetHeader, SheetFooter, SheetTitle, SheetTrigger, SheetClose } from '@/components/ui/sheet'
+import { GripVerticalIcon, ArrowUpDownIcon, CheckIcon, SearchIcon, SlidersHorizontalIcon, XIcon } from 'lucide-vue-next'
 
 type Filter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Cancelled'
 const filters: Filter[] = ['All', 'Pending', 'In Progress', 'Completed', 'Cancelled']
@@ -23,6 +25,20 @@ const apiFilterMap: Record<Filter, TaskStatus | 'all'> = {
   'Completed': TaskStatus.COMPLETED,
   'Cancelled': TaskStatus.CANCELLED
 }
+
+type PriorityFilter = 'all' | TaskPriority
+const priorityFilters: { label: string; value: PriorityFilter }[] = [
+  { label: 'All priorities', value: 'all' },
+  { label: 'Low', value: TaskPriority.LOW },
+  { label: 'Medium', value: TaskPriority.MEDIUM },
+  { label: 'High', value: TaskPriority.HIGH }
+]
+const activePriority = ref<PriorityFilter>('all')
+
+const searchTerm = ref('')
+const isFiltersSheetOpen = ref(false)
+const hasActiveFilters = computed(() => activeFilter.value !== 'All' || activePriority.value !== 'all')
+let searchDebounceHandle: ReturnType<typeof setTimeout> | undefined
 
 const PER_PAGE = 15
 
@@ -59,7 +75,10 @@ const isEditDialogOpen = ref(false)
 const fetchTasks = async (page = 1, append = false) => {
   try {
     append ? (isLoadingMore.value = true) : (loading.value = true)
-    const result = await TaskService.getAll(apiFilterMap[activeFilter.value], page, PER_PAGE)
+    const result = await TaskService.getAll(apiFilterMap[activeFilter.value], page, PER_PAGE, {
+      priority: activePriority.value,
+      search: searchTerm.value
+    })
     tasks.value = append ? [...tasks.value, ...result.data] : result.data
     currentPage.value = result.meta.current_page
     lastPage.value = result.meta.last_page
@@ -77,7 +96,17 @@ const fetchTasks = async (page = 1, append = false) => {
 
 const loadMore = () => fetchTasks(currentPage.value + 1, true)
 
-watch(activeFilter, () => fetchTasks(1))
+watch([activeFilter, activePriority], () => fetchTasks(1))
+
+watch(searchTerm, () => {
+  clearTimeout(searchDebounceHandle)
+  searchDebounceHandle = setTimeout(() => fetchTasks(1), 350)
+})
+
+const clearFilters = () => {
+  activeFilter.value = 'All'
+  activePriority.value = 'all'
+}
 
 onMounted(() => fetchTasks(1))
 
@@ -170,9 +199,9 @@ function cancelSorting() {
 
 <template>
   <div class="max-w-3xl p-2 sm:p-6 mx-auto">
-    <div class="flex items-center justify-between mb-8">
-      <h1 class="text-3xl font-bold">Todo App</h1>
-      <div class="flex items-center gap-2">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6 sm:mb-8">
+      <h1 class="text-2xl font-bold sm:text-3xl">Todo App</h1>
+      <div class="flex items-center gap-2 flex-wrap">
         <!-- Sorting toggle -->
         <template v-if="!isSortingMode">
           <Button
@@ -210,8 +239,84 @@ function cancelSorting() {
       </div>
     </div>
 
-    <!-- Filter tabs — hidden while sorting to avoid confusion -->
-    <div v-if="!isSortingMode" class="grid grid-cols-3 gap-2 mb-6 sm:flex sm:flex-row flex-wrap">
+    <!-- Search + filters — hidden while sorting to avoid confusion -->
+    <div v-if="!isSortingMode" class="flex items-center gap-2 mb-4">
+      <div class="relative flex-1">
+        <SearchIcon class="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+        <Input
+          v-model="searchTerm"
+          placeholder="Search tasks..."
+          class="pl-8 pr-8"
+        />
+        <button
+          v-if="searchTerm"
+          type="button"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground cursor-pointer"
+          @click="searchTerm = ''"
+        >
+          <XIcon class="w-4 h-4" />
+        </button>
+      </div>
+
+      <!-- Mobile: filter icon opens sheet -->
+      <Sheet v-model:open="isFiltersSheetOpen">
+        <SheetTrigger as-child>
+          <Button variant="outline" size="icon" class="relative shrink-0 cursor-pointer sm:hidden">
+            <SlidersHorizontalIcon class="w-4 h-4" />
+            <span v-if="hasActiveFilters" class="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" class="w-full sm:max-w-sm">
+          <SheetHeader>
+            <SheetTitle>Filters</SheetTitle>
+          </SheetHeader>
+
+          <div class="flex flex-col gap-4 mt-2 overflow-y-auto">
+            <div>
+              <p class="text-sm font-medium mb-2">Status</p>
+              <div class="grid grid-cols-2 gap-2">
+                <Button
+                  v-for="filter in filters"
+                  :key="filter"
+                  :variant="activeFilter === filter ? 'default' : 'outline'"
+                  class="text-xs justify-start cursor-pointer"
+                  @click="activeFilter = filter"
+                >
+                  {{ filter }} ({{ filterCounts[filter] }})
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <p class="text-sm font-medium mb-2">Priority</p>
+              <div class="grid grid-cols-2 gap-2">
+                <Button
+                  v-for="p in priorityFilters"
+                  :key="p.value"
+                  :variant="activePriority === p.value ? 'default' : 'outline'"
+                  class="text-xs justify-start cursor-pointer"
+                  @click="activePriority = p.value"
+                >
+                  {{ p.label }}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <SheetFooter>
+            <Button variant="ghost" class="cursor-pointer" @click="clearFilters">
+              Clear filters
+            </Button>
+            <SheetClose as-child>
+              <Button class="cursor-pointer">Apply</Button>
+            </SheetClose>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+    </div>
+
+    <!-- Desktop: inline filter tabs + priority -->
+    <div v-if="!isSortingMode" class="hidden sm:flex sm:flex-row flex-wrap gap-2 mb-6">
       <Button
         v-for="filter in filters"
         :key="filter"
@@ -220,6 +325,16 @@ function cancelSorting() {
         class="text-xs cursor-pointer sm:text-sm whitespace-nowrap"
       >
         {{ filter }} ({{ filterCounts[filter] }})
+      </Button>
+      <span class="w-px bg-border mx-1" />
+      <Button
+        v-for="p in priorityFilters"
+        :key="p.value"
+        :variant="activePriority === p.value ? 'default' : 'outline'"
+        @click="activePriority = p.value"
+        class="text-xs cursor-pointer sm:text-sm whitespace-nowrap"
+      >
+        {{ p.label }}
       </Button>
     </div>
 

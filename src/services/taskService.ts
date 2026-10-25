@@ -77,10 +77,17 @@ apiClient.interceptors.response.use(
 )
 
 export const TaskService = {
-  async getAll(filter?: TaskStatus | 'all', page = 1, perPage = 15): Promise<PaginatedTasks> {
+  async getAll(
+    filter?: TaskStatus | 'all',
+    page = 1,
+    perPage = 15,
+    options?: { priority?: TaskPriority | 'all'; search?: string }
+  ): Promise<PaginatedTasks> {
     const { data } = await apiClient.get('/tasks', {
       params: {
         status: filter !== 'all' ? filter : undefined,
+        priority: options?.priority !== undefined && options.priority !== 'all' ? options.priority : undefined,
+        search: options?.search || undefined,
         page,
         per_page: perPage
       }
