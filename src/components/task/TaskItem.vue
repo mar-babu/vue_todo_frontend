@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { PencilIcon, TrashIcon } from 'lucide-vue-next'
+import { PencilIcon, TrashIcon, GripVerticalIcon } from 'lucide-vue-next'
 import type { Task } from '@/services/taskService'
 import { TaskStatus, TaskPriority } from "@/services/taskService"
 import Button from '@/components/ui/button/Button.vue'
@@ -7,6 +7,7 @@ import TaskBadgeSelect from '@/components/task/TaskBadgeSelect.vue'
 
 const props = defineProps<{
 	task: Task
+  isSorting?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -44,7 +45,18 @@ const handleDelete = () => {
 </script>
 
 <template>
-	<div class="flex items-start gap-4 p-4 transition-colors border rounded-lg group hover:bg-accent/50">
+	<div
+    class="flex items-start gap-2 p-4 transition-colors border rounded-lg group hover:bg-accent/50"
+    :class="{ 'cursor-grab active:cursor-grabbing ring-2 ring-primary/20': isSorting }"
+  >
+    <!-- Drag Handle -->
+    <div
+      v-if="isSorting"
+      class="drag-handle flex items-center self-center px-1 text-muted-foreground/50 hover:text-muted-foreground transition-colors cursor-grab shrink-0"
+    >
+      <GripVerticalIcon class="w-5 h-5" />
+    </div>
+
 		<div class="flex-1 min-w-0 overflow-hidden">
 			<div class="flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
 				<span 

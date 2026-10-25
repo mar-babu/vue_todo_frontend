@@ -30,6 +30,24 @@ interface ApiResponse<T> {
   data: T
 }
 
+export interface TaskCounts {
+  all: number
+  [status: number]: number
+}
+
+export interface PaginationMeta {
+  current_page: number
+  last_page: number
+  per_page: number
+  total: number
+  counts: TaskCounts
+}
+
+export interface PaginatedTasks {
+  data: Task[]
+  meta: PaginationMeta
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -59,9 +77,20 @@ apiClient.interceptors.response.use(
 )
 
 export const TaskService = {
-  async getAll(filter?: TaskStatus | 'all'): Promise<Task[]> {
+  async getAll(
+    filter?: TaskStatus | 'all',
+    page = 1,
+    perPage = 15,
+    options?: { priority?: TaskPriority | 'all'; search?: string }
+  ): Promise<PaginatedTasks> {
     const { data } = await apiClient.get('/tasks', {
-      params: { status: filter !== 'all' ? filter : undefined }
+      params: {
+        status: filter !== 'all' ? filter : undefined,
+        priority: options?.priority !== undefined && options.priority !== 'all' ? options.priority : undefined,
+        search: options?.search || undefined,
+        page,
+        per_page: perPage
+      }
     })
     return data
   },
@@ -97,5 +126,9 @@ export const TaskService = {
       priority: newPriority
     })
     return data.data
+  },
+
+  async reorderTasks(tasks: { id: string; position: number }[]): Promise<void> {
+    await apiClient.put('/tasks/reorder', { tasks })
   }
 }
