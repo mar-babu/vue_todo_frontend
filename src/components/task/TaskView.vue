@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import draggable from 'vuedraggable'
 
 import Button from '@/components/ui/button/Button.vue'
@@ -9,7 +9,7 @@ import TaskItem from "@/components/task/TaskItem.vue"
 import TaskEditForm from "@/components/task/TaskEditForm.vue"
 import { TaskService } from "@/services/taskService"
 import { TaskStatus, TaskPriority } from "@/services/taskService"
-import type { Task } from "@/services/taskService"
+import type { Task, TaskCounts } from "@/services/taskService"
 import { GripVerticalIcon, ArrowUpDownIcon, CheckIcon } from 'lucide-vue-next'
 
 type Filter = 'All' | 'Pending' | 'In Progress' | 'Completed' | 'Cancelled'
@@ -24,64 +24,75 @@ const apiFilterMap: Record<Filter, TaskStatus | 'all'> = {
   'Cancelled': TaskStatus.CANCELLED
 }
 
-const allTasks = ref<Task[]>([])
+const PER_PAGE = 15
+
+const tasks = ref<Task[]>([])
+const currentPage = ref(1)
+const lastPage = ref(1)
+const total = ref(0)
 const isSortingMode = ref(false)
 const isSavingOrder = ref(false)
+const isLoadingMore = ref(false)
 
 // Working copy used while in sorting mode so we don't affect the filtered view
 const sortableTasks = ref<Task[]>([])
 
-const tasks = computed(() => {
-  if (activeFilter.value === 'All') return allTasks.value
-  return allTasks.value.filter(t => t.status === apiFilterMap[activeFilter.value])
-})
+const counts = ref<TaskCounts>({ all: 0, 0: 0, 1: 0, 2: 0, 3: 0 })
 
 const filterCounts = computed(() => {
   return {
-    'All': allTasks.value.length,
-    'Pending': allTasks.value.filter(t => t.status === TaskStatus.PENDING).length,
-    'In Progress': allTasks.value.filter(t => t.status === TaskStatus.IN_PROGRESS).length,
-    'Completed': allTasks.value.filter(t => t.status === TaskStatus.COMPLETED).length,
-    'Cancelled': allTasks.value.filter(t => t.status === TaskStatus.CANCELLED).length
+    'All': counts.value.all ?? 0,
+    'Pending': counts.value[TaskStatus.PENDING] ?? 0,
+    'In Progress': counts.value[TaskStatus.IN_PROGRESS] ?? 0,
+    'Completed': counts.value[TaskStatus.COMPLETED] ?? 0,
+    'Cancelled': counts.value[TaskStatus.CANCELLED] ?? 0
   }
 })
+
+const hasMore = computed(() => currentPage.value < lastPage.value)
 
 const loading = ref(true)
 const error = ref<string | null>(null)
 const selectedTaskId = ref<string>('')
 const isEditDialogOpen = ref(false)
 
-const fetchTasks = async () => {
+const fetchTasks = async (page = 1, append = false) => {
   try {
-    loading.value = true
-    allTasks.value = await TaskService.getAll('all')
+    append ? (isLoadingMore.value = true) : (loading.value = true)
+    const result = await TaskService.getAll(apiFilterMap[activeFilter.value], page, PER_PAGE)
+    tasks.value = append ? [...tasks.value, ...result.data] : result.data
+    currentPage.value = result.meta.current_page
+    lastPage.value = result.meta.last_page
+    total.value = result.meta.total
+    counts.value = result.meta.counts
     error.value = null
   } catch (err) {
     error.value = 'Failed to load tasks'
-    allTasks.value = []
+    if (!append) tasks.value = []
   } finally {
     loading.value = false
+    isLoadingMore.value = false
   }
 }
 
-onMounted(fetchTasks)
+const loadMore = () => fetchTasks(currentPage.value + 1, true)
 
-const remainingTasks = computed(() =>
-  allTasks.value.filter((t: any) => t.status !== TaskStatus.COMPLETED).length
-)
+watch(activeFilter, () => fetchTasks(1))
 
-const completedCount = computed(() =>
-  allTasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED).length
-)
+onMounted(() => fetchTasks(1))
+
+const remainingTasks = computed(() => total.value - (counts.value[TaskStatus.COMPLETED] ?? 0))
+
+const completedCount = computed(() => counts.value[TaskStatus.COMPLETED] ?? 0)
 
 const handleTaskCreated = async () => {
-  await fetchTasks()
+  await fetchTasks(1)
 }
 
 const handleToggleTask = async (taskId: string, newStatus: TaskStatus) => {
   try {
     await TaskService.updateStatus(taskId, newStatus)
-    await fetchTasks()
+    await fetchTasks(1)
   } catch (err) {
     error.value = 'Failed to update task status'
   }
@@ -90,7 +101,7 @@ const handleToggleTask = async (taskId: string, newStatus: TaskStatus) => {
 const handleUpdatePriority = async (taskId: string, newPriority: TaskPriority) => {
   try {
     await TaskService.updatePriority(taskId, newPriority)
-    await fetchTasks()
+    await fetchTasks(1)
   } catch (err) {
     error.value = 'Failed to update task priority'
   }
@@ -99,7 +110,7 @@ const handleUpdatePriority = async (taskId: string, newPriority: TaskPriority) =
 const handleDeleteTask = async (taskId: string) => {
   try {
     await TaskService.delete(taskId)
-    await fetchTasks()
+    await fetchTasks(1)
   } catch (err) {
     error.value = 'Failed to delete task'
   }
@@ -107,9 +118,10 @@ const handleDeleteTask = async (taskId: string) => {
 
 const clearCompleted = async () => {
   try {
-    const completedTasks = allTasks.value.filter((t: any) => t.status === TaskStatus.COMPLETED)
-    await Promise.all(completedTasks.map((t: any) => TaskService.delete(t.id)))
-    await fetchTasks()
+    await TaskService.getAll(TaskStatus.COMPLETED, 1, 1000).then(result =>
+      Promise.all(result.data.map((t: any) => TaskService.delete(t.id)))
+    )
+    await fetchTasks(1)
   } catch (err) {
     error.value = 'Failed to clear completed tasks'
   }
@@ -121,7 +133,7 @@ const handleEditTask = (task: Task) => {
 }
 
 const handleTaskUpdated = (updatedTask: Task) => {
-  allTasks.value = allTasks.value.map((t: any) =>
+  tasks.value = tasks.value.map((t: any) =>
     t.id === updatedTask.id ? updatedTask : t
   )
 }
@@ -167,7 +179,7 @@ function cancelSorting() {
             variant="outline"
             size="sm"
             class="gap-2 cursor-pointer"
-            :disabled="allTasks.length < 2"
+            :disabled="tasks.length < 2"
             @click="enableSorting"
           >
             <ArrowUpDownIcon class="w-4 h-4" />
@@ -268,6 +280,19 @@ function cancelSorting() {
             @edit="handleEditTask"
           />
         </TransitionGroup>
+
+        <div v-if="!isSortingMode && hasMore" class="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            class="cursor-pointer"
+            :disabled="isLoadingMore"
+            @click="loadMore"
+          >
+            <Spinner v-if="isLoadingMore" class="w-4 h-4" />
+            {{ isLoadingMore ? 'Loading...' : 'Load more' }}
+          </Button>
+        </div>
 
       </div>
 
